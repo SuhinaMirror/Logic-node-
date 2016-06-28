@@ -1,5 +1,5 @@
 {
-  "name": "Logic",
+  "name": "logic",
   "version": "0.0.0",
   "description": "Logic to suhinamirror",
   "main": "index.js",
@@ -8,11 +8,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com/suhinamirror"
+    "url": "git+https://github.com/github.com/suhinamirror.git"
   },
   "keywords": [
     "suhina"
   ],
   "author": "Vinö",
-  "license": "BSD-2-Clause"
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/github.com/suhinamirror/issues"
+  },
+  "homepage": "https://github.com/github.com/suhinamirror#readme",
+  "dependencies": {
+    "sequelize": "^3.23.4"
+  }
 }
