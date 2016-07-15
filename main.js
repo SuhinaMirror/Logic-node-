@@ -9,6 +9,11 @@ var SensorState = sequelize.define('SensorState', {
     value: Sequelize.STRING
 }); 
 
+
+var services = require('./services');
+
+console.log(services.services);
+
 SensorState.sync({force: true}).then(function(){
     // Table created
     ws.on('connection', function(ws){
