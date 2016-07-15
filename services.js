@@ -28,7 +28,7 @@ reittiopas_service =
 
         var source;
         var destination;
-        
+
         var request = require("request")
 
         //Requestaa HTTP get reittioppaan sivuilta ja tallenna tiedot jonnekki
@@ -76,25 +76,45 @@ reittiopas_service =
         });
     }
 };
+test_service =
+{
+    expire: 10, // seconds
+    parameters: [
+        {name: 'src'},
+        {name: 'dest'}
+    ],
+    returns: [
+        {name: 'ttl', unit: 'seconds', prettyname: 'Time to leave'},
+    ],
+    raw_call: function(params, fn)
+    {
+        fn({
+          'test_service': 'hello service!'
+        });
+    }
+};
 
 service_exports = {
-    'reittiopas': reittiopas_service
+    'reittiopas': reittiopas_service,
+    'test_service': test_service
 };
 
 module.exports =
 {
     services: service_exports,
-    call_service: function(parameters, fn)
+    call_service: function(service_id, parameters, fn)
     {
-        service = service_exports[parameters.id];
+        service = service_exports[service_id];
         // TODO: cache results here to avoid unnecessary calls to raw_call
         service.raw_call(parameters, fn);
     }
 };
 
+/*
 reittiopas_service.raw_call({
     src: 'Siikakuja 2',
     dest: 'Mannerheimintie 60'
 }, function(){
     console.log("joo")
 })
+*/

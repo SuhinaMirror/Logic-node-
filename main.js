@@ -1,16 +1,16 @@
-var WebSocketServer = require('ws').Server;
-var ws = new WebSocketServer({port: 8080});
+let WebSocketServer = require('ws').Server;
+let ws = new WebSocketServer({port: 8080});
 
-var Sequelize = require('sequelize');
-var sequelize = new Sequelize('sqlite://db.sqlite');
+let Sequelize = require('sequelize');
+let sequelize = new Sequelize('sqlite://db.sqlite');
 
-var SensorState = sequelize.define('SensorState', {
+let SensorState = sequelize.define('SensorState', {
     name: {type: Sequelize.STRING, unique: true},
     value: Sequelize.STRING
-}); 
+});
 
-
-var services = require('./services');
+let services = require('./services');
+let state = require('./state');
 
 console.log(services.services);
 
@@ -23,8 +23,9 @@ SensorState.sync({force: true}).then(function(){
             // handle message
             //
             msg = JSON.parse(msg);
-            if (msg.method == 'update')
+            if (msg.method == 'set')
             {
+                state.set(msg.key, msg.value);
                 SensorState.upsert({
                     name: msg.key,
                     value: JSON.stringify(msg.value)
@@ -32,24 +33,21 @@ SensorState.sync({force: true}).then(function(){
             }
             else if(msg.method == 'get')
             {
-                SensorState.findOne({
-                    where: {
-                        name: msg.key
-                    }
-                }).then(function(ret){
-                    ws.send(JSON.stringify({
-                        key: ret.name,
-                        value: ret.value,
-                        createdAt: ret.createdAt,
-                        updateAt: ret.updatedAt,
-                    }));
+                state.get(msg.key, function(value)
+                {
+                    ws.send(JSON.stringify(
+                        {
+                            key: ret.name,
+                            value: re.value,
+                            createdAt: ret.createdAt,
+                            updateAt: ret.updatedAt,
+                        }));
                 });
             }
             else
             {
                 console.log('unsupported method!');
             }
-
         });
         ws.send('welcome');
     });

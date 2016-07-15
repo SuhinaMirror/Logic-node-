@@ -15,13 +15,13 @@ document.body.appendChild(messages);
 ws.onopen = function(event)
 {
     ws.send(JSON.stringify({
-        'method': 'update',
-        'key': 'camera1',
-        'value': {'person': 'matti'}
+        'method': 'set',
+        'key': 'active_user',
+        'value': 'joonas'
     }));
-
+/*
     ws.send(JSON.stringify({
         'method': 'get',
         'key': 'camera1'
-    }));
+    }));*/
 };
