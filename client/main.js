@@ -16,9 +16,12 @@ ws.onopen = function(event)
 {
     ws.send(JSON.stringify({
         'method': 'update',
-        'update': 'camera',
-        'person': 'matti'
+        'key': 'camera1',
+        'value': {'person': 'matti'}
+    }));
+
+    ws.send(JSON.stringify({
+        'method': 'get',
+        'key': 'camera1'
     }));
 };
-
-
