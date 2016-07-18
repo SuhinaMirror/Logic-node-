@@ -24,7 +24,7 @@ reittiopas_service =
         //(Insertoi uudet koordinaatit)
         // -> hae aika , bussi ja pysäkki (esim.)
         var urlSource = "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key=" + params.src;
-        var urlDestination = "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key=teekkarikyla" + params.dest;
+        var urlDestination = "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key=" + params.dest;
 
         var source;
         var destination;
@@ -54,21 +54,26 @@ reittiopas_service =
                     }
                 })
 
-        var route;
+        var route = null;
         var urlRoute = 'http://api.reittiopas.fi/hsl/prod/?request=route&user=Laged&pass=Oispa3Kaliaa&from=' + source + '&to=' + destination;
 
         request({
                         url: urlRoute,
                         json: true
                     }, function (error, response, body) {
-                        console.log("KISSE");
-                        console.log(error);
-                        console.log(response);
+
                         if (!error && response.statusCode === 200) {
-                            console.log("ROUTE: " + body);
-                            route = response; // Print the json response
+                            console.log("ROUTE: " + response);
+                            route = response[0][0]; // Print the json response
+                            
                         }
                     })
+
+        var legs = route.legs;
+        var stopName = route.legs.locs[1].name;
+        var arrTime = legs[0].locs[0].arrTime;
+        var firstDuration = legs[0].duration;
+        var startTime = arrTime - firstDuration/60 - 60; 
 
         fn({
             'ttl': 10,
