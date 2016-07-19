@@ -27,55 +27,45 @@ let G = {
 
 let services = require('./services');
 let clone = require('clone');
+let lodash = require('lodash')
 
-function get_state(key)
-{
+function get_state(key) {
   return G.state[key];
 };
 
-function set_state(key, value)
-{
+function set_state(key, value) {
   G.state[key] = value;
 };
 
-function _apply(state, rules)
+function apply_rule(state, rule)
 {
-  // rules is an array, apply the topmost and recurse
-  let len = rules.length;
-  if (len == 0) {
-    // no rules left, call callback
-    return new Promise((resolve, reject) => {
-      resolve(clone(state));
-    });
-  }
-
-  let rule = rules[0];
-  if (state[rule.variable] == rule.value) {
-    // rule match, call service
-    let args = clone(rule.service_args);
-    return services.call_service(rule.service, args).then((result) => {
-      for (var key in result)
-      {
-        if (!result.hasOwnProperty(key))
-          continue;
-        state[key] = result[key];
-      }
-      return _apply(state, rules.slice(1));
-    });
-  }
-  else {
-    // no match
-    return _apply(state, rules.slice(1));
-  };
+  return new Promise((resolve, reject) => {
+    if (state[rule.variable] == rule.value) {
+      // rule match, call service
+      let args = clone(rule.service_args);
+      return services.call_service(rule.service, args).then((result) => {
+        for (let key in result) {
+          if (!result.hasOwnProperty(key))
+            continue;
+          state[key] = result[key];
+        }
+        resolve(state);
+      });
+    }
+    else {
+      // no match
+      resolve(state);
+    };
+  });
 };
 function dump_state()
 {
   // unroll+copy rules so that each rule only one action
   let rules = [];
-  for (var i=0; i<G['rules'].length;++i)
+  for (let i=0; i<G['rules'].length; ++i)
   {
     let rule = G['rules'][i];
-    for (var a=0; a<rule['actions'].length;++a)
+    for (let a=0; a<rule['actions'].length; ++a)
     {
       let act = rule['actions'][a];
       rules.push({
@@ -87,13 +77,16 @@ function dump_state()
       });
     }
   }
-  return _apply(clone(G['state']), clone(rules));
+
+  let state = clone(G.state);
+  return lodash.reduce(rules, (left, right) => {
+    return apply_rule(state, left).then(apply_rule(state, right));
+  });
 }
 
 module.exports =
 {
-  get: (key) =>
-  {
+  get: (key) => {
     return new Promise((resolve, reject) => {
       val = get_state(key);
       resolve(val);
@@ -110,8 +103,7 @@ module.exports =
          fn(ret);
       });*/
   },
-  set: (key, value) =>
-  {
+  set: (key, value) => {
     set_state(key, value);
     dump_state().then((state) => {
       console.log('State is now:\n' + JSON.stringify(state, null, '\t'));

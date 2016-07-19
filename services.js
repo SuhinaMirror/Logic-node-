@@ -27,10 +27,7 @@ reittiopas_service =
       + encodeURIComponent(params.dest);
 
     var fetch = require('node-fetch');
-
-    let G = {
-
-    };
+    let G = {};
 
     //Requestaa HTTP get reittioppaan sivuilta ja tallenna tiedot jonnekki
     return fetch(urlSource).then((x) => {return x.text()}).then((response_text) => {
