@@ -1,4 +1,4 @@
-var G = {
+let G = {
   'state': {},
   'rules': [{
     'variable': 'active_user',
@@ -26,7 +26,7 @@ var G = {
 };
 
 let services = require('./services');
-var clone = require('clone');
+let clone = require('clone');
 
 function get_state(key)
 {
@@ -38,40 +38,37 @@ function set_state(key, value)
   G.state[key] = value;
 };
 
-function _apply(state, rules, callback)
+function _apply(state, rules)
 {
   // rules is an array, apply the topmost and recurse
   let len = rules.length;
-  if (len == 0)
-  {
+  if (len == 0) {
     // no rules left, call callback
-    callback(JSON.stringify(state));
-    return;
+    return new Promise((resolve, reject) => {
+      resolve(clone(state));
+    });
   }
 
   let rule = rules[0];
-  if (state[rule.variable] == rule.value)
-  {
+  if (state[rule.variable] == rule.value) {
     // rule match, call service
     let args = clone(rule.service_args);
-    services.call_service(rule.service, args, function(result)
-    {
+    return services.call_service(rule.service, args).then((result) => {
       for (var key in result)
       {
         if (!result.hasOwnProperty(key))
           continue;
         state[key] = result[key];
       }
-      _apply(state, rules.slice(1), callback);
+      return _apply(state, rules.slice(1));
     });
   }
-  else
-  {
+  else {
     // no match
-    _apply(state, rules.slice(1), callback);
+    return _apply(state, rules.slice(1));
   };
 };
-function dump_state(callback)
+function dump_state()
 {
   // unroll+copy rules so that each rule only one action
   let rules = [];
@@ -90,30 +87,34 @@ function dump_state(callback)
       });
     }
   }
-  _apply(clone(G['state']), clone(rules), callback);
+  return _apply(clone(G['state']), clone(rules));
 }
 
 module.exports =
 {
-    get: function(key, fn)
-    {
-        val = get_state(key);
-        fn(val);
-        /*
-        SensorState.findOne(
-        {
-            where:
-            {
-                name: msg.key
-            }
-        }).then(function(ret)
-        {
-           fn(ret);
-        });*/
-    },
-    set: function(key, value)
-    {
-        set_state(key, value);
-        dump_state(function(s){console.log('dumped state: '+s);})
-    }
+  get: (key) =>
+  {
+    return new Promise((resolve, reject) => {
+      val = get_state(key);
+      resolve(val);
+    });
+      /*
+      SensorState.findOne(
+      {
+          where:
+          {
+              name: msg.key
+          }
+      }).then(function(ret)
+      {
+         fn(ret);
+      });*/
+  },
+  set: (key, value) =>
+  {
+    set_state(key, value);
+    dump_state().then((state) => {
+      console.log('State is now:\n' + JSON.stringify(state, null, '\t'));
+    });
+  }
 }

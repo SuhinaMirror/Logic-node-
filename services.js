@@ -1,132 +1,107 @@
 reittiopas_service =
 {
-    expire: 120, // seconds
-    parameters: [
-        {name: 'src'},
-        {name: 'dest'}
-    ],
-    returns: [
-        {name: 'ttl', unit: 'seconds', prettyname: 'Time to leave'},
-    ],
-    raw_call: function(params, fn)
-    {
-        // params.source_address
-        // params.destination_address
-        // muitakin.. TODO!
-        //
+  expire: 120, // seconds
+  parameters: [
+    {name: 'src'},
+    {name: 'dest'}
+  ],
+  returns: [
+    {name: 'next_bus.stop_name', prettyname: 'Name of the bus stop'},
+    {name: 'next_bus.time_of_departure', prettyname: 'Time when the bus leaves'},
+    {name: 'next_bus.vehicle_code', prettyname: 'Bus line ID'},
+  ],
+  raw_call: (params) =>
+  {
+    //EKA KUTSU
+    //http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key=teekkarikyla
+    // -> hae osoite
 
-        //EKA KUTSU
-        //http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key=teekkarikyla
-        // -> hae osoite
+    //TOKA KUTSU
+    //http://api.reittiopas.fi/hsl/prod/?request=route&user=Laged&pass=Oispa3Kaliaa&from=2546445,6675512&to=2549445,6675513
+    //(Insertoi uudet koordinaatit)
+    // -> hae aika , bussi ja pysäkki (esim.)
 
-        //TOKA KUTSU
-        //http://api.reittiopas.fi/hsl/prod/?request=route&user=Laged&pass=Oispa3Kaliaa&from=2546445,6675512&to=2549445,6675513
-        //(Insertoi uudet koordinaatit)
-        // -> hae aika , bussi ja pysäkki (esim.)
-        var urlSource = "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key=" + params.src;
-        var urlDestination = "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key=" + params.dest;
+    var urlSource = "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key="
+      + encodeURIComponent(params.src);
+    var urlDestination = "http://api.reittiopas.fi/hsl/prod/?request=geocode&user=Laged&pass=Oispa3Kaliaa&key="
+      + encodeURIComponent(params.dest);
 
-        var source;
-        var destination;
+    var fetch = require('node-fetch');
 
-        var request = require("request")
+    let G = {
 
-        //Requestaa HTTP get reittioppaan sivuilta ja tallenna tiedot jonnekki
-        request({
-                    url: urlSource,
-                    json: true
-                }, function (error, response, body) {
+    };
 
-                    if (!error && response.statusCode === 200) {
-                        console.log("SOURCE: " + body[0].coords);
-                        source = body[0].coords; // Print the json response
-                    }
-                })
-        //
-        request({
-                    url: urlDestination,
-                    json: true
-                }, function (error, response, body) {
+    //Requestaa HTTP get reittioppaan sivuilta ja tallenna tiedot jonnekki
+    return fetch(urlSource).then((x) => {return x.text()}).then((response_text) => {
 
-                    if (!error && response.statusCode === 200) {
-                        console.log("DESTINATION: " + body[0].coords);
-                        destination = body[0].coords; // Print the json response
-                    }
-                })
+      G.source = JSON.parse(response_text)[0].coords;
 
-        var route = null;
-        var urlRoute = 'http://api.reittiopas.fi/hsl/prod/?request=route&user=Laged&pass=Oispa3Kaliaa&from=' + source + '&to=' + destination;
+      return fetch(urlDestination).then((x)=>{return x.text();});
+    }).then((response_text) => {
 
-        request({
-                        url: urlRoute,
-                        json: true
-                    }, function (error, response, body) {
+      G.destination = JSON.parse(response_text)[0].coords;
+      var urlRoute = 'http://api.reittiopas.fi/hsl/prod/?request=route&user=Laged&pass=Oispa3Kaliaa&from=' + encodeURIComponent(G.source) + '&to=' + encodeURIComponent(G.destination);
 
-                        if (!error && response.statusCode === 200) {
-                            console.log("ROUTE: " + response);
-                            route = response[0][0]; // Print the json response
-                            
-                        }
-                    })
+      return fetch(urlRoute).then((x)=>{return x.text();});
+    }).then((response_text) => {
 
-        var legs = route.legs;
-        var stopName = route.legs.locs[1].name;
+      let route = JSON.parse(response_text)[0][0];
 
-        //Mihin kellonaikaan pitää lähteä
-        var arrTime = legs[0].locs[0].arrTime;
-        var firstDuration = legs[0].duration;
-        var startTime = arrTime - firstDuration/60;
+      let legs = route.legs;
+      let stopName = legs[0].locs[1].name;
 
-        //Kulkuvälineen numerokoodin hakeminen (esim. 2102 jos kyseessä bussi 102)
-        var vehicleCode = legs[1].code.split(" ")[0];
+      //Mihin kellonaikaan pitää lähteä
+      let arrTime = legs[0].locs[0].arrTime;
+      let firstDuration = legs[0].duration;
+      let startTime = arrTime - firstDuration/60;
 
-        fn({
-            'ttl': 10,
-            'stopName' : stopName,
-            'timeOfDeparture': startTime,
-            'vehicleCode' : vehicleCode
-        });
-    }
+      //Kulkuvälineen numerokoodin hakeminen (esim. 2102 jos kyseessä bussi 102)
+      let vehicleCode = legs[1].code.split(" ")[0];
+
+      let result_data = {
+        'next_bus.stop_name' : stopName,
+        'next_bus.time_of_departure': startTime,
+        'next_bus.vehicle_code' : vehicleCode
+      };
+
+      return new Promise((resolve, reject) => {
+        resolve(result_data);
+      });
+    });
+  }
 };
 test_service =
 {
-    expire: 10, // seconds
-    parameters: [
-        {name: 'src'},
-        {name: 'dest'}
-    ],
-    returns: [
-        {name: 'ttl', unit: 'seconds', prettyname: 'Time to leave'},
-    ],
-    raw_call: function(params, fn)
-    {
-        fn({
-          'test_service': 'hello service!'
-        });
-    }
+  expire: 10, // seconds
+  parameters: [
+    {name: 'src'},
+    {name: 'dest'}
+  ],
+  returns: [
+    {name: 'ttl', unit: 'seconds', prettyname: 'Time to leave'},
+  ],
+  raw_call: (params) => {
+    return new Promise((resolve, reject) => {
+      resolve({
+        'test_service': 'hello service!'
+      });
+    });
+  }
 };
 
 service_exports = {
-    'reittiopas': reittiopas_service,
-    'test_service': test_service
+  'reittiopas': reittiopas_service,
+  'test_service': test_service
 };
 
 module.exports =
 {
-    services: service_exports,
-    call_service: function(service_id, parameters, fn)
-    {
-        service = service_exports[service_id];
-        // TODO: cache results here to avoid unnecessary calls to raw_call
-        service.raw_call(parameters, fn);
-    }
+  services: service_exports,
+  call_service: (service_id, parameters) =>
+  {
+    service = service_exports[service_id];
+    // TODO: cache results here to avoid unnecessary calls to raw_call
+    return service.raw_call(parameters);
+  }
 };
-
-/*
-reittiopas_service.raw_call({
-    src: 'Siikakuja 2',
-    dest: 'Mannerheimintie 60'
-}, function(){
-    console.log("joo")
-})
-*/
