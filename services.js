@@ -71,13 +71,20 @@ reittiopas_service =
 
         var legs = route.legs;
         var stopName = route.legs.locs[1].name;
+
+        //Mihin kellonaikaan pitää lähteä
         var arrTime = legs[0].locs[0].arrTime;
         var firstDuration = legs[0].duration;
-        var startTime = arrTime - firstDuration/60 - 60; 
+        var startTime = arrTime - firstDuration/60;
+
+        //Kulkuvälineen numerokoodin hakeminen (esim. 2102 jos kyseessä bussi 102)
+        var vehicleCode = legs[1].code.split(" ")[0];
 
         fn({
             'ttl': 10,
-            'route' : route
+            'stopName' : stopName,
+            'timeOfDeparture': startTime,
+            'vehicleCode' : vehicleCode
         });
     }
 };
