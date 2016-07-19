@@ -2,32 +2,42 @@ let G = {
   'state': {},
   'rules': [{
     'variable': 'active_user',
-    'value': 'matti',
+    'value': 'Laged',
     'actions': [{
-        'name': 'Next bus to Kamppi',
-        'service': 'reittiopas',
-        'service_args': {
-          'src': 'Mäntyviita 5',
-          'dest': 'Kamppi'
-        }
+      'name': 'Next bus to Kamppi',
+      'service': 'reittiopas',
+      'service_args': {
+        'src': 'Mäntyviita 5',
+        'dest': 'Kamppi'
+      }
+    }]
+  },{
+    'variable': 'active_user',
+    'value': 'Vino',
+    'actions': [{
+      'name': 'Next bus to JMT',
+      'service': 'reittiopas',
+      'service_args': {
+        'src': 'Mäntyviita 5',
+        'dest': 'JMT'
+      }
     }]
   },{
     'variable': 'active_user',
     'value': 'joonas',
     'actions': [{
-        'name': 'Fubar',
-        'service': 'test_service',
-        'service_args': {
-          'src': 'Mäntyviita 5',
-          'dest': 'Kamppi'
-        }
+      'name': 'Fubar',
+      'service': 'test_service',
+      'service_args': {
+        'src': 'Mäntyviita 5',
+        'dest': 'Kamppi'
+      }
     }]
   }]
 };
 
 let services = require('./services');
 let clone = require('clone');
-let lodash = require('lodash')
 
 function get_state(key) {
   return G.state[key];
@@ -79,9 +89,15 @@ function dump_state()
   }
 
   let state = clone(G.state);
-  return lodash.reduce(rules, (left, right) => {
-    return apply_rule(state, left).then(apply_rule(state, right));
-  });
+  let prev = apply_rule(state, rules[0]);
+  for (let i = 1; i < rules.length; ++i)
+  {
+    prev = prev.then(
+        (state) =>
+          apply_rule(state, rules[i])
+    );
+  }
+  return prev;
 }
 
 module.exports =
@@ -105,8 +121,11 @@ module.exports =
   },
   set: (key, value) => {
     set_state(key, value);
-    dump_state().then((state) => {
+    /*dump_state().then((state) => {
       console.log('State is now:\n' + JSON.stringify(state, null, '\t'));
-    });
+    });*/
+  },
+  get_state: () => {
+    return dump_state()
   }
 }
