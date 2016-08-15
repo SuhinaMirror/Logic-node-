@@ -87,13 +87,13 @@ test_service =
   }
 };
 
-Object.prototype.equals = function(b) {
-  var x = Object.keys(this).sort();
+function objectEqual(a, b) {
+  var x = Object.keys(a).sort();
   var y = Object.keys(b).sort();
   if (x.length != y.length) return false;
 
   for (var i = 0; i < x.length; i++)
-    if (x[i] != y[i] || this[x[i]] != b[y[i]]) return false;
+    if (x[i] != y[i] || a[x[i]] != b[y[i]]) return false;
 
   return true;
 }
@@ -116,7 +116,7 @@ module.exports =
         cache.splice(i, 1);
         continue;
       }
-      if (cache[i].service != service_id || !parameters.equals(cache[i].params))
+      if (cache[i].service != service_id || !objectEquals(parameters, cache[i].params))
         continue;
 
       return cache[i].result;
