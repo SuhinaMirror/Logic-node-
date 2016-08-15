@@ -112,7 +112,7 @@ module.exports =
     service = service_exports[service_id];
     // TODO: cache results here to avoid unnecessary calls to raw_call
     for (var i = cache.length - 1; i >= 0; i--) {
-      if (cache[i].time < (Date.now()/1000 - service_exports[cache.service].expire)) {
+      if (cache[i].time < (Date.now()/1000 - service_exports[cache[i].service].expire)) {
         cache.splice(i, 1);
         continue;
       }
