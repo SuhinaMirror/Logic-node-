@@ -87,6 +87,18 @@ test_service =
   }
 };
 
+Object.prototype.equals = function(b) {
+  var x = Object.keys(this).sort();
+  var y = Object.keys(b).sort();
+  if (x.length != y.length) return false;
+
+  for (var i = 0; i < x.length; i++)
+    if (x[i] != y[i] || this[x[i]] != b[y[i]]) return false;
+
+  return true;
+}
+var cache = [];
+
 service_exports = {
   'reittiopas': reittiopas_service,
   'test_service': test_service
@@ -99,6 +111,19 @@ module.exports =
   {
     service = service_exports[service_id];
     // TODO: cache results here to avoid unnecessary calls to raw_call
-    return service.raw_call(parameters);
+    for (var i = cache.length - 1; i >= 0; i--) {
+      if (cache[i].time < (Date.now()/1000 - service_exports[cache.service].expire)) {
+        cache.splice(i, 1);
+        continue;
+      }
+      if (cache[i].service != service_id || !parameters.equals(cache[i].params))
+        continue;
+
+      return cache[i].result;
+    }
+    
+    var res = {'service': service_id, time: Date.now()/1000, 'params': parameters, 'result': service.raw_call(parameters)};
+    cache.push(res);
+    return res.result;
   }
 };
