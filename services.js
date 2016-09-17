@@ -87,6 +87,19 @@ test_service =
   }
 };
 
+weather_service = {
+    expire: 7200,
+    parameters: [],
+    returns: [],
+    raw_call: (params) => {
+        return new Promise((resolve, reject) => {
+            resolve({
+                
+            });
+        });
+    }
+};
+
 function objectEqual(a, b) {
   var x = Object.keys(a).sort();
   var y = Object.keys(b).sort();
