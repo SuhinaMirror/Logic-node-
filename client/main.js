@@ -12,7 +12,7 @@ ws.onmessage = function (event) {
 document.body.appendChild(messages);
 
 ws.onopen = function(event) {
-
+/*
   ws.send(JSON.stringify({
     'method': 'set',
     'key': 'active_user',
@@ -23,7 +23,7 @@ ws.onopen = function(event) {
     'method': 'set',
     'key': 'active_user',
     'value': 'aleksi'
-  }));
+  }));*/
 
   ws.send(JSON.stringify({
     'method': 'set',

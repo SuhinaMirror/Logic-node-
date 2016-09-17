@@ -27,10 +27,8 @@ let G = {
     'value': 'joonas',
     'actions': [{
       'name': 'Fubar',
-      'service': 'test_service',
+      'service': 'weather_service',
       'service_args': {
-        'src': 'Mäntyviita 5',
-        'dest': 'Kamppi'
       }
     }]
   }]

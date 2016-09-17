@@ -89,12 +89,41 @@ test_service =
 
 weather_service = {
     expire: 7200,
-    parameters: [],
+    parameters: [{
+        name: 'location',
+        name: 'key'
+    }],
     returns: [],
     raw_call: (params) => {
-        return new Promise((resolve, reject) => {
-            resolve({
-                
+
+        // openweathermap apikey
+        let key = require('fs').readFileSync('openweathermap.apikey'); 
+        console.log('key is ' + key);
+        let loc = params['location'] || 'Espoo'
+        let url = 
+            'http://api.openweathermap.org/data/2.5/weather?q='+encodeURIComponent(loc)+'&units=metric&apikey=' + key;
+        
+        var fetch = require('node-fetch');
+        return fetch(url).then((x) =>
+        { 
+            return x.text();
+        }).then((response_text) =>
+        {
+            let msg = JSON.parse(response_text);
+            let w = msg['main'];
+            let retkey = params['key'] || 'weather'; 
+
+            let result = {};
+            result[retkey] = {
+                temp: w['temp'],
+                pressure: w['pressure'],
+                humidity: w['humidity'],
+                //'temp_min': w['temp_min'],
+                //'temp_max': w['temp_max']
+            };
+ 
+            return new Promise((resolve, reject) => {
+                resolve(result);
             });
         });
     }
@@ -114,7 +143,8 @@ var cache = [];
 
 service_exports = {
   'reittiopas': reittiopas_service,
-  'test_service': test_service
+  'test_service': test_service,
+  'weather_service': weather_service
 };
 
 module.exports =
