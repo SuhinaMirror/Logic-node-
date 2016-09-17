@@ -1,5 +1,5 @@
 let WebSocketServer = require('ws').Server;
-let wss = new WebSocketServer({port: 8080});
+let wss = new WebSocketServer({port: 80});
 
 let Sequelize = require('sequelize');
 let sequelize = new Sequelize('sqlite://db.sqlite', {logging: false});
@@ -27,6 +27,8 @@ function send_state()
     console.log('sending ' + msg);
   });
 }
+
+
 
 SensorState.sync({force: true}).then(() => {
 
